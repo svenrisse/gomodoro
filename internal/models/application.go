@@ -40,7 +40,7 @@ func InitialApp() application {
 		ChoicesSet:       false,
 		help:             help.New(),
 		keymap:           NewKeymap(),
-		progress:         progress.New(progress.WithScaledGradient("#93c5fd", "#1d4ed8")),
+		progress:         progress.New(progress.WithSolidFill("#0ea5e9")),
 	}
 }
 
@@ -80,8 +80,7 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		app.timer, cmd = app.timer.Update(msg)
 
-		// TODO: incr depending on time
-		progressCmd := app.progress.IncrPercent(0.1)
+		progressCmd := app.progress.IncrPercent(1 / (float64(app.Duration.Abs() * 60)))
 		return app, tea.Batch(cmd, progressCmd)
 
 	case tea.WindowSizeMsg:

@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type application struct {
 	Start            time.Time
-	Duration         int8
+	Duration         int
 	ShortBreak       time.Duration
 	LongBreak        time.Duration
 	PomoCountChoices []uint8
 	ChoicesSet       bool
+	timer            timer.Model
 }
 
 func InitialApp() application {
@@ -32,12 +34,11 @@ func (app application) View() string {
 	s := ""
 	if !app.ChoicesSet {
 		s += "How long should one Pomodoro be?\n"
-
 		s += fmt.Sprintf("%d", app.Duration)
 	}
 
 	if app.ChoicesSet {
-		s += fmt.Sprintf("Duration selected: %d", app.Duration)
+		s += app.timer.View()
 	}
 
 	s += "\nPress q to quit.\n"
@@ -52,6 +53,11 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return app, tea.Quit
 		}
+
+	case timer.TickMsg:
+		var cmd tea.Cmd
+		app.timer, cmd = app.timer.Update(msg)
+		return app, cmd
 	}
 
 	if app.ChoicesSet == false {
@@ -66,8 +72,10 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if app.Duration > 0 {
 					app.Duration--
 				}
-			case "enter", " ":
+			case "enter":
 				app.ChoicesSet = true
+				app.timer = timer.New(time.Minute * time.Duration(app.Duration))
+				return app, app.timer.Init()
 			}
 		}
 	}

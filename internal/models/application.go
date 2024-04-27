@@ -36,29 +36,19 @@ func (app application) Init() tea.Cmd {
 	return nil
 }
 
-func (app application) helpView() string {
-	return "\n" + app.help.ShortHelpView([]key.Binding{
-		app.keymap.up,
-		app.keymap.down,
-		app.keymap.left,
-		app.keymap.right,
-		app.keymap.confirm,
-		app.keymap.quit,
-	})
-}
-
 func (app application) View() string {
 	s := ""
 	if !app.ChoicesSet {
 		s += "How long should one Pomodoro be?\n"
 		s += fmt.Sprintf("%d min", app.Duration)
+		s += app.keymap.helpView(app.help)
 	}
 
 	if app.ChoicesSet {
 		s += fmt.Sprintf("🍅 %s", app.timer.View())
+		s += app.keymap.helpView(app.help)
 	}
 
-	s += app.helpView()
 	return s
 }
 

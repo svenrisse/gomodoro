@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 )
 
@@ -22,4 +23,15 @@ func NewKeymap() keymap {
 		confirm: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "confirm")),
 		quit:    key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "exit")),
 	}
+}
+
+func (k keymap) helpView(help help.Model) string {
+	return "\n\n\n" + help.ShortHelpView([]key.Binding{
+		k.up,
+		k.down,
+		k.left,
+		k.right,
+		k.confirm,
+		k.quit,
+	})
 }

@@ -37,6 +37,9 @@ func InitialApp() application {
 	return application{
 		Start:            time.Now(),
 		Duration:         25,
+		ShortBreak:       10,
+		LongBreak:        15,
+		Count:            0,
 		PomoCountChoices: 3,
 		State:            "settings",
 		Help:             help.New(),
@@ -51,6 +54,8 @@ func (app application) Init() tea.Cmd {
 
 func (app application) View() string {
 	s := "🍅 Gomodoro Timer\n\n"
+	s += fmt.Sprintf("State: %s\n", app.State)
+	s += fmt.Sprintf("Count: %d\n", app.Count)
 	if app.State == "settings" {
 		s += "How long should one Gomodoro be?\n"
 		s += fmt.Sprintf("%d min", app.Duration)
@@ -63,11 +68,19 @@ func (app application) View() string {
 		s += app.Keymap.helpView(app.Help)
 	}
 
+	if app.State == "shortBreak" {
+		s += "Short break\n"
+		s += fmt.Sprintf("%s\n", app.Timer.View())
+		s += app.Progress.View()
+		s += app.Keymap.helpView(app.Help)
+	}
+
 	return s
 }
 
 func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, app.Keymap.quit):
@@ -75,15 +88,41 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case timer.TickMsg:
-		if app.Progress.Percent() == 1.0 {
-			app.Count++
-			// pause...
-		}
 		var cmd tea.Cmd
 		app.Timer, cmd = app.Timer.Update(msg)
 
-		progressCmd := app.Progress.IncrPercent(1 / (float64(app.Duration.Abs() * 60)))
+		var progressCmd tea.Cmd
+		if app.State == "focus" {
+			progressCmd = app.Progress.IncrPercent(1 / (float64(app.Duration.Abs() * 60)))
+		}
+		if app.State == "shortBreak" {
+			progressCmd = app.Progress.IncrPercent(1 / (float64(app.ShortBreak.Abs() * 60)))
+		}
+		if app.State == "longBreak" {
+			progressCmd = app.Progress.IncrPercent(1 / (float64(app.LongBreak.Abs() * 60)))
+		}
 		return app, tea.Batch(cmd, progressCmd)
+
+	case timer.TimeoutMsg:
+		// pause...
+		if app.State == "focus" {
+			if app.Count == app.PomoCountChoices {
+				//	app.Timer = timer.New(time.Second * time.Duration(app.LongBreak))
+				//	app.Count = 0
+				app.State = "longPause"
+			}
+			if app.Count < app.PomoCountChoices {
+				app.Progress.SetPercent(0)
+				app.Count++
+				app.Timer = timer.New(time.Minute * time.Duration(app.ShortBreak))
+				app.State = "shortBreak"
+			}
+			return app, app.Timer.Init()
+		}
+
+		if app.State == "longPause" || app.State == "shortBreak" {
+			app.State = "focus"
+		}
 
 	case tea.WindowSizeMsg:
 		app.Progress.Width = msg.Width - padding*2 - 4

@@ -24,12 +24,13 @@ type application struct {
 	Duration         time.Duration
 	ShortBreak       time.Duration
 	LongBreak        time.Duration
+	Count            uint8
 	PomoCountChoices uint8
-	ChoicesSet       bool
-	timer            timer.Model
-	help             help.Model
-	keymap           keymap
-	progress         progress.Model
+	State            string
+	Timer            timer.Model
+	Help             help.Model
+	Keymap           keymap
+	Progress         progress.Model
 }
 
 func InitialApp() application {
@@ -37,10 +38,10 @@ func InitialApp() application {
 		Start:            time.Now(),
 		Duration:         25,
 		PomoCountChoices: 3,
-		ChoicesSet:       false,
-		help:             help.New(),
-		keymap:           NewKeymap(),
-		progress:         progress.New(progress.WithSolidFill("#0ea5e9")),
+		State:            "settings",
+		Help:             help.New(),
+		Keymap:           NewKeymap(),
+		Progress:         progress.New(progress.WithSolidFill("#0ea5e9")),
 	}
 }
 
@@ -50,16 +51,16 @@ func (app application) Init() tea.Cmd {
 
 func (app application) View() string {
 	s := "🍅 Gomodoro Timer\n\n"
-	if !app.ChoicesSet {
+	if app.State == "settings" {
 		s += "How long should one Gomodoro be?\n"
 		s += fmt.Sprintf("%d min", app.Duration)
-		s += app.keymap.helpView(app.help)
+		s += app.Keymap.helpView(app.Help)
 	}
 
-	if app.ChoicesSet {
-		s += fmt.Sprintf("%s\n", app.timer.View())
-		s += app.progress.View()
-		s += app.keymap.helpView(app.help)
+	if app.State == "focus" {
+		s += fmt.Sprintf("%s\n", app.Timer.View())
+		s += app.Progress.View()
+		s += app.Keymap.helpView(app.Help)
 	}
 
 	return s
@@ -69,49 +70,50 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, app.keymap.quit):
+		case key.Matches(msg, app.Keymap.quit):
 			return app, tea.Quit
 		}
 
 	case timer.TickMsg:
-		if app.progress.Percent() == 1.0 {
+		if app.Progress.Percent() == 1.0 {
+			app.Count++
 			// pause...
 		}
 		var cmd tea.Cmd
-		app.timer, cmd = app.timer.Update(msg)
+		app.Timer, cmd = app.Timer.Update(msg)
 
-		progressCmd := app.progress.IncrPercent(1 / (float64(app.Duration.Abs() * 60)))
+		progressCmd := app.Progress.IncrPercent(1 / (float64(app.Duration.Abs() * 60)))
 		return app, tea.Batch(cmd, progressCmd)
 
 	case tea.WindowSizeMsg:
-		app.progress.Width = msg.Width - padding*2 - 4
-		if app.progress.Width > maxWidth {
-			app.progress.Width = maxWidth
+		app.Progress.Width = msg.Width - padding*2 - 4
+		if app.Progress.Width > maxWidth {
+			app.Progress.Width = maxWidth
 		}
 		return app, nil
 
 	case progress.FrameMsg:
-		progressModel, cmd := app.progress.Update(msg)
-		app.progress = progressModel.(progress.Model)
+		progressModel, cmd := app.Progress.Update(msg)
+		app.Progress = progressModel.(progress.Model)
 		return app, cmd
 
 	}
-	if app.ChoicesSet == false {
+	if app.State == "settings" {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch {
-			case key.Matches(msg, app.keymap.up):
+			case key.Matches(msg, app.Keymap.up):
 				if app.Duration < 60 {
 					app.Duration++
 				}
-			case key.Matches(msg, app.keymap.down):
+			case key.Matches(msg, app.Keymap.down):
 				if app.Duration > 0 {
 					app.Duration--
 				}
-			case key.Matches(msg, app.keymap.confirm):
-				app.ChoicesSet = true
-				app.timer = timer.New(time.Minute * time.Duration(app.Duration))
-				return app, app.timer.Init()
+			case key.Matches(msg, app.Keymap.confirm):
+				app.State = "focus"
+				app.Timer = timer.New(time.Minute * time.Duration(app.Duration))
+				return app, app.Timer.Init()
 			}
 		}
 	}

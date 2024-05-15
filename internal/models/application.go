@@ -201,14 +201,45 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch {
+
 			case key.Matches(msg, app.Keymap.up):
-				if app.Duration < 60 {
-					app.Duration++
+				if app.activeModel == durationView {
+					if app.Duration < 60 {
+						app.Duration++
+					}
+				} else if app.activeModel == pomoCountView {
+					if app.PomoCountChoices < 11 {
+						app.PomoCountChoices++
+					}
+				} else if app.activeModel == shortBreakView {
+					if app.ShortBreak < 60 {
+						app.ShortBreak++
+					}
+				} else if app.activeModel == longBreakView {
+					if app.LongBreak < 120 {
+						app.LongBreak++
+					}
 				}
+
 			case key.Matches(msg, app.Keymap.down):
-				if app.Duration > 0 {
-					app.Duration--
+				if app.activeModel == durationView {
+					if app.Duration > 0 {
+						app.Duration--
+					}
+				} else if app.activeModel == pomoCountView {
+					if app.PomoCountChoices > 0 {
+						app.PomoCountChoices--
+					}
+				} else if app.activeModel == shortBreakView {
+					if app.ShortBreak > 0 {
+						app.ShortBreak--
+					}
+				} else if app.activeModel == longBreakView {
+					if app.LongBreak > 0 {
+						app.LongBreak--
+					}
 				}
+
 			case key.Matches(msg, app.Keymap.right):
 				if app.activeModel == durationView {
 					app.activeModel = pomoCountView
@@ -217,6 +248,7 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else if app.activeModel == shortBreakView {
 					app.activeModel = longBreakView
 				}
+
 			case key.Matches(msg, app.Keymap.left):
 				if app.activeModel == longBreakView {
 					app.activeModel = shortBreakView

@@ -5,11 +5,11 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/svenrisse/gomodoro/internal/models"
+	application "github.com/svenrisse/gomodoro/internal"
 )
 
 func main() {
-	app := tea.NewProgram(models.InitialApp(), tea.WithAltScreen())
+	app := tea.NewProgram(application.InitialApp(), tea.WithAltScreen())
 	_, err := app.Run()
 	if err != nil {
 		fmt.Printf("There's been an error: %v", err)

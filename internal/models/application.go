@@ -30,14 +30,14 @@ const (
 
 var (
 	unfocusedModelStyle = lipgloss.NewStyle().
-				Width(15).
-				Height(3).
+				Width(16).
+				Height(4).
 				Align(lipgloss.Center, lipgloss.Center).
 				BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("188"))
 
 	focusedModelStyle = lipgloss.NewStyle().
-				Width(15).
-				Height(3).
+				Width(16).
+				Height(4).
 				Align(lipgloss.Center, lipgloss.Center).
 				BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("202"))
 )
@@ -80,41 +80,137 @@ func (app application) Init() tea.Cmd {
 func (app application) View() string {
 	s := "🍅 Gomodoro Timer\n\n"
 	if app.State == "settings" {
-		s += "How long should one Gomodoro be?\n"
+		s += "Settings:\n"
 		if app.activeModel == durationView {
 			s += lipgloss.JoinHorizontal(
 				lipgloss.Top,
-				focusedModelStyle.Render(fmt.Sprintf("%d min", app.Duration)),
-				unfocusedModelStyle.Render(fmt.Sprintf("%d", app.PomoCountChoices)),
-				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.ShortBreak)),
-				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.LongBreak)),
+				focusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Pomo Duration",
+						fmt.Sprintf("%d", app.Duration),
+					),
+				),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Pomo Count",
+						fmt.Sprintf("%d", app.PomoCountChoices),
+					),
+				),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Short Break",
+						fmt.Sprintf("%d", app.ShortBreak),
+					),
+				),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Long Break",
+						fmt.Sprintf("%d", app.LongBreak),
+					),
+				),
 			)
 		}
 		if app.activeModel == pomoCountView {
 			s += lipgloss.JoinHorizontal(
 				lipgloss.Top,
-				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.Duration)),
-				focusedModelStyle.Render(fmt.Sprintf("%d", app.PomoCountChoices)),
-				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.ShortBreak)),
-				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.LongBreak)),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Pomo Duration",
+						fmt.Sprintf("%d", app.Duration),
+					),
+				),
+				focusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Pomo Count",
+						fmt.Sprintf("%d", app.PomoCountChoices),
+					),
+				),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Short Break",
+						fmt.Sprintf("%d", app.ShortBreak),
+					),
+				),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Long Break",
+						fmt.Sprintf("%d", app.LongBreak),
+					),
+				),
 			)
 		}
 		if app.activeModel == shortBreakView {
 			s += lipgloss.JoinHorizontal(
 				lipgloss.Top,
-				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.Duration)),
-				unfocusedModelStyle.Render(fmt.Sprintf("%d", app.PomoCountChoices)),
-				focusedModelStyle.Render(fmt.Sprintf("%d min", app.ShortBreak)),
-				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.LongBreak)),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Pomo Duration",
+						fmt.Sprintf("%d", app.Duration),
+					),
+				),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Pomo Count",
+						fmt.Sprintf("%d", app.PomoCountChoices),
+					),
+				),
+				focusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Short Break",
+						fmt.Sprintf("%d", app.ShortBreak),
+					),
+				),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Long Break",
+						fmt.Sprintf("%d", app.LongBreak),
+					),
+				),
 			)
 		}
 		if app.activeModel == longBreakView {
 			s += lipgloss.JoinHorizontal(
 				lipgloss.Top,
-				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.Duration)),
-				unfocusedModelStyle.Render(fmt.Sprintf("%d", app.PomoCountChoices)),
-				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.ShortBreak)),
-				focusedModelStyle.Render(fmt.Sprintf("%d min", app.LongBreak)),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Pomo Duration",
+						fmt.Sprintf("%d", app.Duration),
+					),
+				),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Pomo Count",
+						fmt.Sprintf("%d", app.PomoCountChoices),
+					),
+				),
+				unfocusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Short Break",
+						fmt.Sprintf("%d", app.ShortBreak),
+					),
+				),
+				focusedModelStyle.Render(
+					lipgloss.JoinVertical(
+						lipgloss.Left,
+						"Long Break",
+						fmt.Sprintf("%d", app.LongBreak),
+					),
+				),
 			)
 		}
 
@@ -220,7 +316,6 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						app.LongBreak++
 					}
 				}
-
 			case key.Matches(msg, app.Keymap.down):
 				if app.activeModel == durationView {
 					if app.Duration > 0 {
@@ -239,7 +334,6 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						app.LongBreak--
 					}
 				}
-
 			case key.Matches(msg, app.Keymap.right):
 				if app.activeModel == durationView {
 					app.activeModel = pomoCountView
@@ -248,7 +342,6 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else if app.activeModel == shortBreakView {
 					app.activeModel = longBreakView
 				}
-
 			case key.Matches(msg, app.Keymap.left):
 				if app.activeModel == longBreakView {
 					app.activeModel = shortBreakView

@@ -62,6 +62,9 @@ func (app application) Init() tea.Cmd {
 
 func (app application) View() string {
 	s := "🍅 Gomodoro Timer\n\n"
+	s += fmt.Sprintf("Currently: %s\n", app.State)
+	s += fmt.Sprintf("count: %d\n", app.Count)
+	s += fmt.Sprintf("goal: %d\n", app.PomoCountChoices)
 	if app.State == "settings" {
 		s += "Settings:\n"
 		if app.activeModel == durationSetting {
@@ -87,6 +90,13 @@ func (app application) View() string {
 
 	if app.State == "shortBreak" {
 		s += "Short break\n"
+		s += fmt.Sprintf("%s\n", app.Timer.View())
+		s += app.Progress.View()
+		s += app.Keymap.helpView(app.Help)
+	}
+
+	if app.State == "longBreak" {
+		s += "Long break\n"
 		s += fmt.Sprintf("%s\n", app.Timer.View())
 		s += app.Progress.View()
 		s += app.Keymap.helpView(app.Help)
@@ -121,24 +131,26 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return app, tea.Batch(cmd, progressCmd)
 
 	case timer.TimeoutMsg:
-		// pause...
 		if app.State == "focus" {
-			if app.Count == app.PomoCountChoices {
-				//	app.Timer = timer.New(time.Second * time.Duration(app.LongBreak))
-				//	app.Count = 0
-				app.State = "longPause"
-			}
-			if app.Count < app.PomoCountChoices {
-				app.Progress.SetPercent(0)
+			app.Progress.SetPercent(0)
+			if app.Count <= app.PomoCountChoices {
+				app.Timer = timer.New(time.Minute * time.Duration(app.LongBreak))
+				app.State = "longBreak"
+			} else {
 				app.Count++
 				app.Timer = timer.New(time.Minute * time.Duration(app.ShortBreak))
 				app.State = "shortBreak"
 			}
 			return app, app.Timer.Init()
 		}
-
-		if app.State == "longPause" || app.State == "shortBreak" {
+		if app.State == "longBreak" || app.State == "shortBreak" {
+			app.Progress.SetPercent(0)
+			app.Timer = timer.New(time.Minute * time.Duration(app.Duration))
 			app.State = "focus"
+			if app.State == "longBreak" {
+				app.Count = 0
+			}
+			return app, app.Timer.Init()
 		}
 
 	case tea.WindowSizeMsg:
@@ -180,19 +192,19 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case key.Matches(msg, app.Keymap.down):
 				if app.activeModel == durationSetting {
-					if app.Duration > 0 {
+					if app.Duration > 1 {
 						app.Duration--
 					}
 				} else if app.activeModel == pomoCountSetting {
-					if app.PomoCountChoices > 0 {
+					if app.PomoCountChoices > 2 {
 						app.PomoCountChoices--
 					}
 				} else if app.activeModel == shortBreakSetting {
-					if app.ShortBreak > 0 {
+					if app.ShortBreak > 1 {
 						app.ShortBreak--
 					}
 				} else if app.activeModel == longBreakSetting {
-					if app.LongBreak > 0 {
+					if app.LongBreak > 1 {
 						app.LongBreak--
 					}
 				}

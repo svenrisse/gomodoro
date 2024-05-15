@@ -19,6 +19,20 @@ const (
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
+var (
+	modelStyle = lipgloss.NewStyle().
+			Width(15).
+			Height(5).
+			Align(lipgloss.Center, lipgloss.Center).
+			BorderStyle(lipgloss.HiddenBorder())
+
+	focusedModelStyle = lipgloss.NewStyle().
+				Width(15).
+				Height(5).
+				Align(lipgloss.Center, lipgloss.Center).
+				BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("69"))
+)
+
 type application struct {
 	Start            time.Time
 	Duration         time.Duration
@@ -27,6 +41,7 @@ type application struct {
 	Count            uint8
 	PomoCountChoices uint8
 	State            string
+	activeModel      string
 	Timer            timer.Model
 	Help             help.Model
 	Keymap           keymap
@@ -42,6 +57,7 @@ func InitialApp() application {
 		Count:            0,
 		PomoCountChoices: 3,
 		State:            "settings",
+		activeModel:      "duration",
 		Help:             help.New(),
 		Keymap:           NewKeymap(),
 		Progress:         progress.New(progress.WithSolidFill("#0ea5e9")),
@@ -54,11 +70,15 @@ func (app application) Init() tea.Cmd {
 
 func (app application) View() string {
 	s := "🍅 Gomodoro Timer\n\n"
-	s += fmt.Sprintf("State: %s\n", app.State)
-	s += fmt.Sprintf("Count: %d\n", app.Count)
 	if app.State == "settings" {
 		s += "How long should one Gomodoro be?\n"
-		s += fmt.Sprintf("%d min", app.Duration)
+		if app.activeModel == "duration" {
+			s += lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				focusedModelStyle.Render(fmt.Sprintf("%d min", app.Duration)),
+				modelStyle.Render("hi"),
+			)
+		}
 		s += app.Keymap.helpView(app.Help)
 	}
 

@@ -19,18 +19,27 @@ const (
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
+type sessionState uint
+
+const (
+	durationView sessionState = iota
+	pomoCountView
+	shortBreakView
+	longBreakView
+)
+
 var (
-	modelStyle = lipgloss.NewStyle().
-			Width(15).
-			Height(5).
-			Align(lipgloss.Center, lipgloss.Center).
-			BorderStyle(lipgloss.HiddenBorder())
+	unfocusedModelStyle = lipgloss.NewStyle().
+				Width(15).
+				Height(3).
+				Align(lipgloss.Center, lipgloss.Center).
+				BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("188"))
 
 	focusedModelStyle = lipgloss.NewStyle().
 				Width(15).
-				Height(5).
+				Height(3).
 				Align(lipgloss.Center, lipgloss.Center).
-				BorderStyle(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("69"))
+				BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("202"))
 )
 
 type application struct {
@@ -41,7 +50,7 @@ type application struct {
 	Count            uint8
 	PomoCountChoices uint8
 	State            string
-	activeModel      string
+	activeModel      sessionState
 	Timer            timer.Model
 	Help             help.Model
 	Keymap           keymap
@@ -57,7 +66,7 @@ func InitialApp() application {
 		Count:            0,
 		PomoCountChoices: 3,
 		State:            "settings",
-		activeModel:      "duration",
+		activeModel:      durationView,
 		Help:             help.New(),
 		Keymap:           NewKeymap(),
 		Progress:         progress.New(progress.WithSolidFill("#0ea5e9")),
@@ -72,13 +81,43 @@ func (app application) View() string {
 	s := "🍅 Gomodoro Timer\n\n"
 	if app.State == "settings" {
 		s += "How long should one Gomodoro be?\n"
-		if app.activeModel == "duration" {
+		if app.activeModel == durationView {
 			s += lipgloss.JoinHorizontal(
 				lipgloss.Top,
 				focusedModelStyle.Render(fmt.Sprintf("%d min", app.Duration)),
-				modelStyle.Render("hi"),
+				unfocusedModelStyle.Render(fmt.Sprintf("%d", app.PomoCountChoices)),
+				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.ShortBreak)),
+				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.LongBreak)),
 			)
 		}
+		if app.activeModel == pomoCountView {
+			s += lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.Duration)),
+				focusedModelStyle.Render(fmt.Sprintf("%d", app.PomoCountChoices)),
+				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.ShortBreak)),
+				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.LongBreak)),
+			)
+		}
+		if app.activeModel == shortBreakView {
+			s += lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.Duration)),
+				unfocusedModelStyle.Render(fmt.Sprintf("%d", app.PomoCountChoices)),
+				focusedModelStyle.Render(fmt.Sprintf("%d min", app.ShortBreak)),
+				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.LongBreak)),
+			)
+		}
+		if app.activeModel == longBreakView {
+			s += lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.Duration)),
+				unfocusedModelStyle.Render(fmt.Sprintf("%d", app.PomoCountChoices)),
+				unfocusedModelStyle.Render(fmt.Sprintf("%d min", app.ShortBreak)),
+				focusedModelStyle.Render(fmt.Sprintf("%d min", app.LongBreak)),
+			)
+		}
+
 		s += app.Keymap.helpView(app.Help)
 	}
 
@@ -157,6 +196,7 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return app, cmd
 
 	}
+
 	if app.State == "settings" {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
@@ -169,6 +209,23 @@ func (app application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if app.Duration > 0 {
 					app.Duration--
 				}
+			case key.Matches(msg, app.Keymap.right):
+				if app.activeModel == durationView {
+					app.activeModel = pomoCountView
+				} else if app.activeModel == pomoCountView {
+					app.activeModel = shortBreakView
+				} else if app.activeModel == shortBreakView {
+					app.activeModel = longBreakView
+				}
+			case key.Matches(msg, app.Keymap.left):
+				if app.activeModel == longBreakView {
+					app.activeModel = shortBreakView
+				} else if app.activeModel == shortBreakView {
+					app.activeModel = pomoCountView
+				} else if app.activeModel == pomoCountView {
+					app.activeModel = durationView
+				}
+
 			case key.Matches(msg, app.Keymap.confirm):
 				app.State = "focus"
 				app.Timer = timer.New(time.Minute * time.Duration(app.Duration))

@@ -20,5 +20,11 @@ var (
 )
 
 func SettingsCardContent(title string, value any) string {
-	return lipgloss.JoinVertical(lipgloss.Left, title, fmt.Sprintf("%d", value))
+	return lipgloss.JoinVertical(lipgloss.Left, title, fmt.Sprintf("%s", value))
+}
+
+func AppTitle(title string) string {
+	return lipgloss.NewStyle().
+		Width(72).Height(1).Align(lipgloss.Center).Foreground(lipgloss.Color("202")).
+		Render(fmt.Sprintf("%v\n", title))
 }

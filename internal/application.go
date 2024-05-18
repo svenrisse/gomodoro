@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
@@ -52,7 +53,7 @@ func InitialApp() application {
 		activeModel:      durationSetting,
 		Help:             help.New(),
 		Keymap:           NewKeymap(),
-		Progress:         progress.New(progress.WithSolidFill("#0ea5e9")),
+		Progress:         progress.New(progress.WithSolidFill("#ff5f00")),
 	}
 }
 
@@ -61,12 +62,12 @@ func (app application) Init() tea.Cmd {
 }
 
 func (app application) View() string {
-	s := "🍅 Gomodoro Timer\n\n"
-	s += fmt.Sprintf("Currently: %s\n", app.State)
-	s += fmt.Sprintf("count: %d\n", app.Count)
-	s += fmt.Sprintf("goal: %d\n", app.PomoCountChoices)
+	s := AppTitle("🍅 Gomodoro Timer 🍅")
 	if app.State == "settings" {
-		s += "Settings:\n"
+		s += lipgloss.NewStyle().
+			Width(72).Height(1).Align(lipgloss.Center).Bold(true).
+			Render("\nSettings:\n")
+		s += "\n"
 		if app.activeModel == durationSetting {
 			s += DurationFocus(app)
 		}
@@ -83,23 +84,23 @@ func (app application) View() string {
 	}
 
 	if app.State == "focus" {
-		s += fmt.Sprintf("%s\n", app.Timer.View())
+		s += fmt.Sprintf("\n%s\n", app.Timer.View())
 		s += app.Progress.View()
-		s += app.Keymap.helpView(app.Help)
+		s += app.Keymap.focusView(app.Help)
 	}
 
 	if app.State == "shortBreak" {
 		s += "Short break\n"
 		s += fmt.Sprintf("%s\n", app.Timer.View())
 		s += app.Progress.View()
-		s += app.Keymap.helpView(app.Help)
+		s += app.Keymap.focusView(app.Help)
 	}
 
 	if app.State == "longBreak" {
 		s += "Long break\n"
 		s += fmt.Sprintf("%s\n", app.Timer.View())
 		s += app.Progress.View()
-		s += app.Keymap.helpView(app.Help)
+		s += app.Keymap.focusView(app.Help)
 	}
 
 	return s

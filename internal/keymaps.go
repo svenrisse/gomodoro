@@ -35,3 +35,9 @@ func (k keymap) helpView(help help.Model) string {
 		k.quit,
 	})
 }
+
+func (k keymap) focusView(help help.Model) string {
+	return "\n\n\n" + help.ShortHelpView([]key.Binding{
+		k.quit,
+	})
+}
